@@ -2,11 +2,15 @@ use std::{iter::Peekable, path::PathBuf, vec::IntoIter};
 
 #[derive(Clone)]
 pub struct Parser {
+    /// An iterator over the program lines.
     program: Peekable<IntoIter<String>>,
+    /// The current instruction.
     current_instruction: Option<String>,
-    current_line: u32,
+    /// The current line number.
+    instruction_index: u32,
 }
 
+/// The type of instruction.
 #[derive(PartialEq, Debug)]
 pub enum InstructionType {
     A,
@@ -29,7 +33,7 @@ impl Parser {
         Self {
             program: iterator,
             current_instruction: None,
-            current_line: 0,
+            instruction_index: 0,
         }
     }
 
@@ -54,11 +58,16 @@ impl Parser {
         self.current_instruction = self.program.next().map(|c| c.replace(' ', ""));
         // We don't need to increment the line on L instructions
         if !matches!(self.instruction_type(), InstructionType::L) {
-            self.current_line += 1;
+            self.instruction_index += 1;
         }
     }
 
     /// Returns the current instruction type.
+    ///
+    /// # Panic
+    ///
+    /// - Panics if there is no current instruction.
+    /// - Panics if the current instruction is invalid (neither A, L, or C)
     pub fn instruction_type(&self) -> InstructionType {
         if let Some(instruction) = &self.current_instruction {
             if instruction.starts_with('@') {
@@ -118,7 +127,8 @@ impl Parser {
     ///
     /// # Panic
     ///
-    /// Panics if the current instruction is not a C instruction.
+    /// - Panics if the current instruction is not a C instruction.
+    /// - Panics if the comp item is missing.
     pub fn comp(&self) -> String {
         self.assert_current_instruction(InstructionType::C);
 
@@ -165,9 +175,9 @@ impl Parser {
         }
     }
 
-    /// Returns the current line.
-    pub fn current_line(&self) -> u32 {
-        self.current_line
+    /// Returns the index of the current instruction.
+    pub fn instruction_index(&self) -> u32 {
+        self.instruction_index
     }
 
     /// Returns the current instruction.

@@ -46,7 +46,7 @@ impl Assembler<Uninitialized> {
 
             if matches!(parser.instruction_type(), InstructionType::L) {
                 self.symbol_table
-                    .add_label(parser.symbol(), parser.current_line());
+                    .add_label(parser.symbol(), parser.instruction_index());
             }
         }
 
