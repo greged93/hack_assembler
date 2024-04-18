@@ -76,12 +76,13 @@ impl Parser {
     }
 
     /// Returns the current instruction symbol.
+    ///
+    /// # Panic
+    ///
+    /// Panics if the current instruction is not an A or L instruction.
     pub fn symbol(&self) -> String {
         let instruction_type = self.instruction_type();
-        let instruction = self
-            .current_instruction
-            .clone()
-            .expect("expected instruction");
+        let instruction = self.current_instruction();
         let symbol = match instruction_type {
             InstructionType::A => instruction.trim_start_matches('@'),
             InstructionType::L => instruction.trim_start_matches('(').trim_end_matches(')'),
@@ -91,17 +92,16 @@ impl Parser {
     }
 
     /// Return the dest for a C instruction.
+    /// C instructions are in the form of `dest=comp;jump`
+    /// where `dest` and `jump` are optional.
     ///
     /// # Panic
     ///
     /// Panics if the current instruction is not a C instruction.
     pub fn dest(&self) -> String {
-        self.assert_is_instruction(InstructionType::C);
+        self.assert_current_instruction(InstructionType::C);
 
-        let instruction = self
-            .current_instruction
-            .clone()
-            .expect("expected instruction");
+        let instruction = self.current_instruction();
         if !instruction.contains('=') {
             return String::default();
         }
@@ -113,17 +113,16 @@ impl Parser {
     }
 
     /// Return the comp for a C instruction.
+    /// C instructions are in the form of `dest=comp;jump`
+    /// where `dest` and `jump` are optional.
     ///
     /// # Panic
     ///
     /// Panics if the current instruction is not a C instruction.
     pub fn comp(&self) -> String {
-        self.assert_is_instruction(InstructionType::C);
+        self.assert_current_instruction(InstructionType::C);
 
-        let instruction = self
-            .current_instruction
-            .clone()
-            .expect("expected instruction");
+        let instruction = self.current_instruction();
         let comp = if instruction.contains('=') {
             instruction.split('=').nth(1)
         } else if instruction.contains(';') {
@@ -136,17 +135,16 @@ impl Parser {
     }
 
     /// Return the jump for a C instruction.
+    /// C instructions are in the form of `dest=comp;jump`
+    /// where `dest` and `jump` are optional.
     ///
     /// # Panic
     ///
     /// Panics if the current instruction is not a C instruction.
     pub fn jump(&self) -> String {
-        self.assert_is_instruction(InstructionType::C);
+        self.assert_current_instruction(InstructionType::C);
 
-        let instruction = self
-            .current_instruction
-            .clone()
-            .expect("expected instruction");
+        let instruction = self.current_instruction();
         if !instruction.contains(';') {
             return String::default();
         }
@@ -157,7 +155,7 @@ impl Parser {
             .to_string()
     }
 
-    fn assert_is_instruction(&self, expected_instruction_type: InstructionType) {
+    fn assert_current_instruction(&self, expected_instruction_type: InstructionType) {
         if self.instruction_type() != expected_instruction_type {
             panic!(
                 "expected {:?} got {:?}",
@@ -170,5 +168,17 @@ impl Parser {
     /// Returns the current line.
     pub fn current_line(&self) -> u32 {
         self.current_line
+    }
+
+    /// Returns the current instruction.
+    ///
+    /// # Panic
+    ///
+    /// Panics if there is no current instruction.
+    fn current_instruction(&self) -> &str {
+        self.current_instruction
+            .as_ref()
+            .expect("expected instruction")
+            .as_str()
     }
 }
